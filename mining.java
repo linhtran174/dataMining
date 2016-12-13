@@ -14,12 +14,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 public class DataMining {
 
     public static void main(String[] args) throws Exception{
         
-        //////////BUILD INDEX///////////////////////////////////////////////////
+        //////////////BUILD INVERTED INDEX////////////////////////////////////////////
         HashMap<String, List<Integer>> index = new HashMap<>();
         Path path = Paths.get(INPUT_FILE_NAME);
         Scanner scanner = new Scanner(path, ENCODING.name());
@@ -60,29 +61,43 @@ public class DataMining {
         }
         
         /////////////////MINING FREQUENT 2-ITEMSET///////////////////////
-        List<Map.Entry<String, List<Integer>>> itemList;
-        itemList = new ArrayList<>(index.entrySet());
-        Map.Entry<String,List<Integer>> cItem1;
-        Map.Entry<String,List<Integer>> cItem2;
-        for(int i = 0; i < itemList.size(); i++){
-            cItem1 = itemList.get(i);
-            for (int j = i + 1; j < itemList.size(); j++) {
-                cItem2 = itemList.get(j);
-                int support = supportCal(cItem1.getValue(), cItem2.getValue());
-                if(support > minSupport){
-                    result.add(
-                        cItem1.getKey().toString()+ "; " +
-                        cItem2.getKey().toString()+ ": " +
-                        support);
-                }
-            }
-        }
-//        
-//        while(it.hasNext()){
-//            Map.Entry<String, List<Integer>> entry1 = it.next();
-//            System.out.println(entry.getKey());
-//        }
+        // List<Map.Entry<String, List<Integer>>> itemList;
+        // itemList = new ArrayList<>(index.entrySet());
+        // Map.Entry<String,List<Integer>> cItem1;
+        // Map.Entry<String,List<Integer>> cItem2;
+        // for(int i = 0; i < itemList.size(); i++){
+        //     cItem1 = itemList.get(i);
+        //     for (int j = i + 1; j < itemList.size(); j++) {
+        //         cItem2 = itemList.get(j);
+        //         int support = supportCal(cItem1.getValue(), cItem2.getValue());
+        //         if(support > minSupport){
+        //             result.add(
+        //                 cItem1.getKey().toString()+ "; " +
+        //                 cItem2.getKey().toString()+ ": " +
+        //                 support);
+        //         }
+        //     }
+        // }
+
         
+        ////////////////GENERAL CASE MINING/////////////////
+        List<Itemset> cSets, fSets;
+        fSets = genInitSet(index.entrySet());
+        //print fSet
+        
+        //gen cSet
+        cSets = generateCandidate(fSets, index);
+        while(cSets.size()>0){
+            //test cSet, update fSet
+            update(fSet, cSet, index);
+            //print fSet
+            
+            //gen cSet
+            cSets = generateCandidate(fSets, index);
+        }
+
+
+
         //write output
         path = Paths.get(OUTPUT_FILE_NAME);
         Files.write(path, result, ENCODING);
@@ -92,14 +107,22 @@ public class DataMining {
         
     }
     
+    static List<Itemset> genInitSet(Set<Map.Entry<String,List<Integer>>> index){
+        
+    }
+            
+    static class Itemset{
+        public Itemset(){};
+        public List<String> keys;
+        public int support;
+    }
+    
     static Integer minSupport;
     final static double minSupP = 0.01;
     final static String INPUT_FILE_NAME = 
         "/home/linh/NetBeansProjects/dataMining/src/datamining/data.txt";
-    
     final static String OUTPUT_FILE_NAME =
         "/home/linh/NetBeansProjects/dataMining/src/datamining/output.txt";
-    
     final static Charset ENCODING = StandardCharsets.UTF_8;
     
     
@@ -120,4 +143,5 @@ public class DataMining {
         return support;
     }
     
+
 }
