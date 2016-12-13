@@ -1,0 +1,44 @@
+Sandwiches; Restaurants: 2364
+Beauty & Spas; Hair Salons: 2091
+Beauty & Spas; Nail Salons: 1667
+Fast Food; Burgers: 774
+Fast Food; Restaurants: 2851
+Pets; Pet Services: 870
+Event Planning & Services; Hotels: 1431
+Event Planning & Services; Hotels & Travel: 1471
+Food; Coffee & Tea: 2199
+Food; Ice Cream & Frozen Yogurt: 1018
+Food; Bakeries: 1115
+Food; Grocery: 1424
+Food; Restaurants: 2101
+Food; Specialty Food: 1150
+American (New); Restaurants: 1593
+Sushi Bars; Restaurants: 798
+Active Life; Fitness & Instruction: 1442
+Women's Clothing; Fashion: 1138
+Women's Clothing; Shopping: 1138
+Bars; Sports Bars: 818
+Bars; Nightlife: 4328
+Bars; Pubs: 874
+Bars; Restaurants: 2423
+Automotive; Auto Repair: 1716
+American (Traditional); Restaurants: 2416
+Hotels; Hotels & Travel: 1431
+Fashion; Shopping: 3078
+Cafes; Restaurants: 1002
+Sports Bars; Nightlife: 818
+Doctors; Health & Medical: 1694
+Nightlife; Pubs: 874
+Nightlife; Restaurants: 2533
+Mexican; Restaurants: 2515
+General Dentistry; Health & Medical: 823
+General Dentistry; Dentists: 823
+Health & Medical; Dentists: 1195
+Italian; Restaurants: 1848
+Shopping; Home & Garden: 1586
+Burgers; Restaurants: 1774
+Restaurants; Pizza: 2657
+Restaurants; Japanese: 848
+Restaurants; Breakfast & Brunch: 1369
+Restaurants; Chinese: 1629
+Real Estate; Home Services: 1424
