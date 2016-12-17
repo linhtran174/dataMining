@@ -1,7 +1,5 @@
 package datamining;
 
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,11 +15,12 @@ import java.util.Scanner;
 import java.util.Set;
 
 public class DataMining {
-
+    
+    public static HashMap<String, List<Integer>> index;
     public static void main(String[] args) throws Exception{
         
-        //////////////BUILD INVERTED INDEX////////////////////////////////////////////
-        HashMap<String, List<Integer>> index = new HashMap<>();
+        //////////////BUILD INVERTED INDEX//////////////////////////////////////
+        index = new HashMap<>();
         Path path = Paths.get(INPUT_FILE_NAME);
         Scanner scanner = new Scanner(path, ENCODING.name());
         int tranId = 0;
@@ -45,7 +44,7 @@ public class DataMining {
         }
         minSupport = (int)(tranId*minSupP);
         
-        //////
+        //result stream.
         List<String> result = new LinkedList<String>();
         
         
@@ -80,21 +79,22 @@ public class DataMining {
         // }
 
         
-        ////////////////GENERAL CASE MINING/////////////////
-        List<Itemset> cSets, fSets;
-        fSets = genInitSet(index.entrySet());
-        //print fSet
-        
-        //gen cSet
-        cSets = generateCandidate(fSets, index);
-        while(cSets.size()>0){
-            //test cSet, update fSet
-            update(fSet, cSet, index);
-            //print fSet
-            
-            //gen cSet
-            cSets = generateCandidate(fSets, index);
-        }
+        ////////////////GENERAL CASE MINING//////////////////////////////
+//        List<Itemset> cSet, fSet;
+//        fSet = genInitSet();
+//        //print fSet
+//        
+//        //generate cSet from fSet
+//        cSet = genCSet(fSet);
+//        while(cSet.size()>0){
+//            //test cSet, update fSet
+//            fSet = test(cSet);
+//            
+//            //print fSet
+//            
+//            //gen cSet
+//            cSet = genCSet(fSet);
+//        }
 
 
 
@@ -107,24 +107,51 @@ public class DataMining {
         
     }
     
-    static List<Itemset> genInitSet(Set<Map.Entry<String,List<Integer>>> index){
-        
+    static List<Itemset> genInitSet(){
+    	List<Itemset> result = new ArrayList<>();
+        for (Map.Entry<String,List<Integer>> entry : index.entrySet()){
+        	Itemset temp = new Itemset();
+        	temp.keys.add(entry.getKey());
+        	temp.support = entry.getValue().size();
+        	result.add(temp);
+        }
+        return result;
     }
             
-    static class Itemset{
-        public Itemset(){};
+    static List<Itemset> genCSet(List<Itemset> fSet){
+        //self-joining
+        //pruning
+        return new ArrayList<Itemset>();
+    }
+
+    static List<Itemset> test(List<Itemset> cSet){
+        //set intersection (key in cSet.keys)
+        Iterator<Itemset> itemset = cSet.iterator();
+        HashMap<Integer, Integer> frequency = new HashMap<>();
+        while(itemset.hasNext()){
+            for(String key : itemset.next().keys) {
+                for (Integer value : index.get(key)){
+                    if(!frequency.containsKey(value)){
+                        frequency.put(value, 1);
+                    }
+                }
+            }
+            if(frequency.keySet().size() < minSupport)
+                itemset.remove();
+            
+            frequency.clear();
+        }
+        return cSet;
+    }
+
+    class Itemset{
+        public Itemset(){
+        	keys = new ArrayList<>();
+        	support = 0;
+        };
         public List<String> keys;
         public int support;
-    }
-    
-    static Integer minSupport;
-    final static double minSupP = 0.01;
-    final static String INPUT_FILE_NAME = 
-        "/home/linh/NetBeansProjects/dataMining/src/datamining/data.txt";
-    final static String OUTPUT_FILE_NAME =
-        "/home/linh/NetBeansProjects/dataMining/src/datamining/output.txt";
-    final static Charset ENCODING = StandardCharsets.UTF_8;
-    
+    }    
     
     static int supportCal(List<Integer> l1, List<Integer> l2){
         HashMap<Integer,Integer> occurrences = new HashMap<>();
@@ -142,6 +169,16 @@ public class DataMining {
         }
         return support;
     }
-    
 
+
+    static Integer minSupport;
+    final static double minSupP = 0.01;
+    final static String INPUT_FILE_NAME = 
+        "/home/linh/NetBeansProjects/dataMining/src/datamining/data.txt";
+    final static String OUTPUT_FILE_NAME =
+        "/home/linh/NetBeansProjects/dataMining/src/datamining/output.txt";
+    final static Charset ENCODING = StandardCharsets.UTF_8;
+
+
+ 
 }
