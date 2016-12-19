@@ -51,33 +51,36 @@ public class DataMining {
         ////////////////MINING FREQUENT 1-ITEMSET////////////////////////
         Iterator<Map.Entry<String,List<Integer>>> it;
         it = index.entrySet().iterator();
-            
+        
+        System.out.println("Different items: "+index.size());
         while(it.hasNext()){
             Map.Entry<String, List<Integer>> entry = it.next();
             if (entry.getValue().size() < minSupport){
                 it.remove();
             }
         }
+        System.out.println("Frequent 1-itemset: " +index.size());
         
-        /////////////////MINING FREQUENT 2-ITEMSET///////////////////////
-        // List<Map.Entry<String, List<Integer>>> itemList;
-        // itemList = new ArrayList<>(index.entrySet());
-        // Map.Entry<String,List<Integer>> cItem1;
-        // Map.Entry<String,List<Integer>> cItem2;
-        // for(int i = 0; i < itemList.size(); i++){
-        //     cItem1 = itemList.get(i);
-        //     for (int j = i + 1; j < itemList.size(); j++) {
-        //         cItem2 = itemList.get(j);
-        //         int support = supportCal(cItem1.getValue(), cItem2.getValue());
-        //         if(support > minSupport){
-        //             result.add(
-        //                 cItem1.getKey().toString()+ "; " +
-        //                 cItem2.getKey().toString()+ ": " +
-        //                 support);
-        //         }
-        //     }
-        // }
-
+        ///////////////MINING FREQUENT 2-ITEMSET///////////////////////
+        List<Map.Entry<String, List<Integer>>> itemList;
+        itemList = new ArrayList<>(index.entrySet());
+        
+        Map.Entry<String,List<Integer>> cItem1;
+        Map.Entry<String,List<Integer>> cItem2;
+        for(int i = 0; i < itemList.size(); i++){
+            cItem1 = itemList.get(i);
+            for (int j = i + 1; j < itemList.size(); j++) {
+                cItem2 = itemList.get(j);
+                int support = supportCal(cItem1.getValue(), cItem2.getValue());
+                if(support > minSupport){
+                    result.add(
+                        cItem1.getKey().toString()+ "; " +
+                        cItem2.getKey().toString()+ ": " +
+                        support);
+                    
+                }
+            }
+        }
         
         ////////////////GENERAL CASE MINING//////////////////////////////
 //        List<Itemset> cSet, fSet;
@@ -102,18 +105,16 @@ public class DataMining {
         path = Paths.get(OUTPUT_FILE_NAME);
         Files.write(path, result, ENCODING);
         
-        System.out.println(index.size());
-        return;
         
     }
     
     static List<Itemset> genInitSet(){
-    	List<Itemset> result = new ArrayList<>();
+        List<Itemset> result = new ArrayList<>();
         for (Map.Entry<String,List<Integer>> entry : index.entrySet()){
-        	Itemset temp = new Itemset();
-        	temp.keys.add(entry.getKey());
-        	temp.support = entry.getValue().size();
-        	result.add(temp);
+            Itemset temp = new Itemset();
+            temp.keys.add(entry.getKey());
+            temp.support = entry.getValue().size();
+            result.add(temp);
         }
         return result;
     }
@@ -127,6 +128,7 @@ public class DataMining {
     static List<Itemset> test(List<Itemset> cSet){
         //set intersection (key in cSet.keys)
         Iterator<Itemset> itemset = cSet.iterator();
+        
         HashMap<Integer, Integer> frequency = new HashMap<>();
         while(itemset.hasNext()){
             for(String key : itemset.next().keys) {
@@ -144,14 +146,7 @@ public class DataMining {
         return cSet;
     }
 
-    class Itemset{
-        public Itemset(){
-        	keys = new ArrayList<>();
-        	support = 0;
-        };
-        public List<String> keys;
-        public int support;
-    }    
+        
     
     static int supportCal(List<Integer> l1, List<Integer> l2){
         HashMap<Integer,Integer> occurrences = new HashMap<>();
@@ -174,11 +169,12 @@ public class DataMining {
     static Integer minSupport;
     final static double minSupP = 0.01;
     final static String INPUT_FILE_NAME = 
-        "/home/linh/NetBeansProjects/dataMining/src/datamining/data.txt";
+        "C:/Users/8470p/Desktop/dataMining/data.txt";
     final static String OUTPUT_FILE_NAME =
-        "/home/linh/NetBeansProjects/dataMining/src/datamining/output.txt";
+        "C:/Users/8470p/Desktop/dataMining/output.txt";
     final static Charset ENCODING = StandardCharsets.UTF_8;
 
 
  
 }
+
