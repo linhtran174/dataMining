@@ -17,6 +17,8 @@ import java.util.Set;
 public class DataMining {
     
     public static HashMap<String, List<Integer>> index;
+    //result stream.
+    public static List<String> OUTPUT_STREAM = new LinkedList<String>();
     public static void main(String[] args) throws Exception{
         
         //////////////BUILD INVERTED INDEX//////////////////////////////////////
@@ -43,16 +45,11 @@ public class DataMining {
             tranId++;
         }
         minSupport = (int)(tranId*minSupP);
-        
-        //result stream.
-        List<String> result = new LinkedList<String>();
-        
-        
+      
         ////////////////MINING FREQUENT 1-ITEMSET////////////////////////
         Iterator<Map.Entry<String,List<Integer>>> it;
         it = index.entrySet().iterator();
         
-        System.out.println("Different items: "+index.size());
         while(it.hasNext()){
             Map.Entry<String, List<Integer>> entry = it.next();
             if (entry.getValue().size() < minSupport){
@@ -61,115 +58,144 @@ public class DataMining {
         }
         System.out.println("Frequent 1-itemset: " +index.size());
         
-        ///////////////MINING FREQUENT 2-ITEMSET///////////////////////
-        List<Map.Entry<String, List<Integer>>> itemList;
-        itemList = new ArrayList<>(index.entrySet());
-        
-        Map.Entry<String,List<Integer>> cItem1;
-        Map.Entry<String,List<Integer>> cItem2;
-        for(int i = 0; i < itemList.size(); i++){
-            cItem1 = itemList.get(i);
-            for (int j = i + 1; j < itemList.size(); j++) {
-                cItem2 = itemList.get(j);
-                int support = supportCal(cItem1.getValue(), cItem2.getValue());
-                if(support > minSupport){
-                    result.add(
-                        cItem1.getKey().toString()+ "; " +
-                        cItem2.getKey().toString()+ ": " +
-                        support);
-                    
-                }
-            }
-        }
         
         ////////////////GENERAL CASE MINING//////////////////////////////
-//        List<Itemset> cSet, fSet;
-//        fSet = genInitSet();
-//        //print fSet
-//        
-//        //generate cSet from fSet
-//        cSet = genCSet(fSet);
-//        while(cSet.size()>0){
-//            //test cSet, update fSet
-//            fSet = test(cSet);
-//            
-//            //print fSet
-//            
-//            //gen cSet
-//            cSet = genCSet(fSet);
-//        }
+        HashMap<List<String>, Integer> fSet;
+        //gen initial frequent 2-itemset
+        fSet = genInitSet();
+
+        //print fSet - ignore fSet with 1 item 
+        //generate cSet from fSet
+        fSet = genCSet(fSet);
+        
+        //while candidate set != null
+        while(fSet == null){
+            //print fSet
+            for(Map.Entry<List<String>, Integer> e : fSet.entrySet()){
+                StringBuilder buffer = new StringBuilder();
+                for(String key : e.getKey()){
+                    buffer.append(key).append(";");
+                }
+                buffer.append("\t").append(e.getValue());
+                OUTPUT_STREAM.add(buffer.toString());
+            }
+            
+            //gen cSet
+            fSet = genCSet(fSet);
+        }
 
 
 
         //write output
         path = Paths.get(OUTPUT_FILE_NAME);
-        Files.write(path, result, ENCODING);
+        Files.write(path, OUTPUT_STREAM, ENCODING);
         
         
     }
     
-    static List<Itemset> genInitSet(){
-        List<Itemset> result = new ArrayList<>();
+    static HashMap<List<String>, Integer> genInitSet(){
+        HashMap<List<String>, Integer> result = new HashMap<>();
         for (Map.Entry<String,List<Integer>> entry : index.entrySet()){
-            Itemset temp = new Itemset();
-            temp.keys.add(entry.getKey());
-            temp.support = entry.getValue().size();
-            result.add(temp);
+            List<String> item = new ArrayList<>();
+            item.add(entry.getKey());
+            result.put(item, entry.getValue().size());
         }
         return result;
     }
             
-    static List<Itemset> genCSet(List<Itemset> fSet){
-        //self-joining
-        //pruning
-        return new ArrayList<Itemset>();
-    }
-
-    static List<Itemset> test(List<Itemset> cSet){
-        //set intersection (key in cSet.keys)
-        Iterator<Itemset> itemset = cSet.iterator();
+    static HashMap genCSet(HashMap<List<String>,Integer> fSet){
+        if (fSet.size() <= 1) return null;
+            
+        HashMap<List<String>,Integer> result = new HashMap<>();
         
-        HashMap<Integer, Integer> frequency = new HashMap<>();
-        while(itemset.hasNext()){
-            for(String key : itemset.next().keys) {
-                for (Integer value : index.get(key)){
-                    if(!frequency.containsKey(value)){
-                        frequency.put(value, 1);
+        boolean cPrefix, prunned;    
+        List<List<String>> itemsets = new ArrayList<>(fSet.keySet());
+        int itemsetSize = itemsets.get(0).size();
+        
+        //iterate through all pairs of itemset
+        for (int i = 0; i < itemsets.size(); i++) {
+            List<String> set1 = itemsets.get(i);
+            for (int j = i + 1; j < itemsets.size(); j++) {
+                List<String> set2 = itemsets.get(j);
+                
+                //common prefix check
+                cPrefix = true;
+                for (int k = 0; k < itemsetSize - 1; k++) {
+                    if(set1.get(k)
+                        .compareTo(set2.get(k)) != 0)
+                        cPrefix = false;
+                }
+                
+                if(cPrefix){
+                    //pruning check
+                    //last1, last2: two last elements
+                    String last1 = set1.get(itemsetSize - 1);
+                    String last2 = set2.get(itemsetSize - 1);
+                    List<String> commonSet = new LinkedList<>(set1);
+                    commonSet.remove(itemsetSize-1);
+                    
+                    //tempSet: current set to check existence
+                    List<String> tempSet = new LinkedList<>();
+                    prunned = false;
+                    for (int k = 0; k < itemsetSize; k++) {
+                        tempSet.addAll(commonSet);
+                        tempSet.remove(k);
+                        if(!tempSet.isEmpty()){
+                            prunned = true;
+                            break;
+                        }
+                    }
+                    
+                    if(!prunned){
+                        //candidate itemset = {commonSet} + last1 + last2
+                        commonSet.add(last1);
+                        commonSet.add(last2);
+                        
+                        int support = supportCal(commonSet);
+                        if(support > minSupport){
+                            result.put(commonSet, support);
+                        }
                     }
                 }
+                
             }
-            if(frequency.keySet().size() < minSupport)
-                itemset.remove();
-            
-            frequency.clear();
         }
-        return cSet;
-    }
-
         
-    
-    static int supportCal(List<Integer> l1, List<Integer> l2){
-        HashMap<Integer,Integer> occurrences = new HashMap<>();
-        int support = 0;
-        for (int i = 0; i < l1.size(); i++) {
-            int temp = l1.get(i);
-            if(!occurrences.containsKey(l1.get(i))){
-                occurrences.put(temp, 1);
-            }
-        }
-        for (int i = 0; i < l2.size(); i++) {
-            if(occurrences.containsKey(l2.get(i))){
-                support++;
-            }
-        }
-        return support;
+        fSet.clear();
+        return result;
     }
 
+    
+    
+    static int supportCal(List<String> itemset){
+        //List of common transactions 
+        HashMap<Integer, Integer> commonTrans = new HashMap<>();
+        int numItem = itemset.size();
+        for(String item : itemset){
+            for(Integer tranID : index.get(item)){
+                if(commonTrans.containsKey(tranID)){
+                    commonTrans
+                        .put(tranID, commonTrans.get(tranID) + 1);
+                }
+                else{
+                    commonTrans.put(tranID, 1);
+                }
+            }
+        }
+        
+        int count = 0;
+        for(Map.Entry<Integer,Integer> e : commonTrans.entrySet()){
+            if(e.getValue() == numItem) count++;
+        }
+        
+        return count;
+    }
+    
 
     static Integer minSupport;
     final static double minSupP = 0.01;
     final static String INPUT_FILE_NAME = 
-        "C:/Users/8470p/Desktop/dataMining/data.txt";
+        "C:/Users/8470p/Desktop/dataMining/testData.txt";
     final static String OUTPUT_FILE_NAME =
         "C:/Users/8470p/Desktop/dataMining/output.txt";
     final static Charset ENCODING = StandardCharsets.UTF_8;
