@@ -6,23 +6,42 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 public class DataMining {
     
-    public static HashMap<String, List<Integer>> index;
-    //result stream.
-    public static List<String> OUTPUT_STREAM = new LinkedList<String>();
+    
+    
+    
+//    static class itemsetLexicalCmp implements Comparator<List<String>>{
+//        
+//        public itemsetLexicalCmp(){}
+//        
+//        @Override
+//        public int compare(List<String> o1, List<String> o2) {
+//            int result = 0;
+//            for (int i = 0; i < o1.size(); i++) {
+//                result = o1.get(i).compareTo(o2.get(i));
+//                if(result != 0){
+//                
+//                }
+//            }
+//        }
+//        
+//    };
+    static Map<String, List<Integer>> index;
     public static void main(String[] args) throws Exception{
-        
+        long start = System.currentTimeMillis();
         //////////////BUILD INVERTED INDEX//////////////////////////////////////
-        index = new HashMap<>();
+        index = new TreeMap<>();
         Path path = Paths.get(INPUT_FILE_NAME);
         Scanner scanner = new Scanner(path, ENCODING.name());
         int tranId = 0;
@@ -36,7 +55,7 @@ public class DataMining {
                     index.get(item).add(tranId);
                 }
                 else{
-                    ArrayList<Integer> list = new ArrayList<Integer>();
+                    ArrayList<Integer> list = new ArrayList<>();
                     list.add(tranId);
                     index.put(item, list);
                 }
@@ -47,66 +66,79 @@ public class DataMining {
         minSupport = (int)(tranId*minSupP);
       
         ////////////////MINING FREQUENT 1-ITEMSET////////////////////////
-        Iterator<Map.Entry<String,List<Integer>>> it;
-        it = index.entrySet().iterator();
-        
-        while(it.hasNext()){
-            Map.Entry<String, List<Integer>> entry = it.next();
-            if (entry.getValue().size() < minSupport){
-                it.remove();
-            }
-        }
-        System.out.println("Frequent 1-itemset: " +index.size());
-        
-        
-        ////////////////GENERAL CASE MINING//////////////////////////////
-        HashMap<List<String>, Integer> fSet;
-        //gen initial frequent 2-itemset
-        fSet = genInitSet();
+//        Iterator<Entry<String,List<Integer>>> it;
+//        it = index.entrySet().iterator();
+//        
+//        while(it.hasNext()){
+//            Entry<String, List<Integer>> entry = it.next();
+//            if (entry.getValue().size() < minSupport){
+//                it.remove();
+//            }
+//        }
+//        System.out.println("Frequent 1-itemset: " +index.size());
+//        
+//        
+//        ////////////////GENERAL CASE MINING//////////////////////////////
+//        TreeMap<List<String>, Integer> fSet;
+//        //gen initial frequent 2-itemset
+//        fSet = genInitSet();
+//
+//        //print fSet - ignore fSet with 1 item 
+//        //generate cSet from fSet
+//        fSet = genCSet(fSet);
+//        
+//        //while candidate set != null
+//        while(fSet == null){
+//            //print fSet
+//            for(Entry<List<String>, Integer> e : fSet.entrySet()){
+//                StringBuilder buffer = new StringBuilder();
+//                for(String key : e.getKey()){
+//                    buffer.append(key).append(";");
+//                }
+//                buffer.append("\t").append(e.getValue());
+//                OUTPUT_STREAM.add(buffer.toString());
+//            }
+//            
+//            //gen cSet
+//            fSet = genCSet(fSet);
+//        }
 
-        //print fSet - ignore fSet with 1 item 
-        //generate cSet from fSet
-        fSet = genCSet(fSet);
+
+        //Execution time
+        long end = System.currentTimeMillis();
+        System.out.println("Execution time: " + (end - start));
         
-        //while candidate set != null
-        while(fSet == null){
-            //print fSet
-            for(Map.Entry<List<String>, Integer> e : fSet.entrySet()){
-                StringBuilder buffer = new StringBuilder();
-                for(String key : e.getKey()){
-                    buffer.append(key).append(";");
-                }
-                buffer.append("\t").append(e.getValue());
-                OUTPUT_STREAM.add(buffer.toString());
-            }
-            
-            //gen cSet
-            fSet = genCSet(fSet);
-        }
-
-
-
         //write output
         path = Paths.get(OUTPUT_FILE_NAME);
         Files.write(path, OUTPUT_STREAM, ENCODING);
         
-        
     }
     
-    static HashMap<List<String>, Integer> genInitSet(){
-        HashMap<List<String>, Integer> result = new HashMap<>();
-        for (Map.Entry<String,List<Integer>> entry : index.entrySet()){
-            List<String> item = new ArrayList<>();
-            item.add(entry.getKey());
-            result.put(item, entry.getValue().size());
+    static TreeMap<List<String>, Integer> genInitSet(){
+        TreeMap<List<String>, Integer> result = new TreeMap<>();
+        
+        List<String> currentSet;
+        List<String> f1 = new ArrayList<>(index.keySet());
+        for (int i = 0; i < f1.size(); i++) {
+            for (int j = i + 1; j < f1.size(); j++) {
+                currentSet = new ArrayList<>();
+                currentSet.add(f1.get(i));
+                currentSet.add(f1.get(j));
+                
+                int support = supportCal(currentSet);
+                if(support > minSupport){
+                    result.put(currentSet, support);
+                }
+            }
         }
+        
         return result;
     }
             
-    static HashMap genCSet(HashMap<List<String>,Integer> fSet){
+    static TreeMap genCSet(TreeMap<List<String>,Integer> fSet){
         if (fSet.size() <= 1) return null;
             
-        HashMap<List<String>,Integer> result = new HashMap<>();
+        TreeMap<List<String>,Integer> result = new TreeMap<>();
         
         boolean cPrefix, prunned;    
         List<List<String>> itemsets = new ArrayList<>(fSet.keySet());
@@ -140,10 +172,13 @@ public class DataMining {
                     for (int k = 0; k < itemsetSize; k++) {
                         tempSet.addAll(commonSet);
                         tempSet.remove(k);
-                        if(!tempSet.isEmpty()){
+                        tempSet.add(last1);
+                        tempSet.add(last2);
+                        if(!fSet.containsKey(tempSet)){
                             prunned = true;
                             break;
                         }
+                        tempSet.clear();
                     }
                     
                     if(!prunned){
@@ -169,7 +204,7 @@ public class DataMining {
     
     static int supportCal(List<String> itemset){
         //List of common transactions 
-        HashMap<Integer, Integer> commonTrans = new HashMap<>();
+        TreeMap<Integer, Integer> commonTrans = new TreeMap<>();
         int numItem = itemset.size();
         for(String item : itemset){
             for(Integer tranID : index.get(item)){
@@ -184,7 +219,7 @@ public class DataMining {
         }
         
         int count = 0;
-        for(Map.Entry<Integer,Integer> e : commonTrans.entrySet()){
+        for(Entry<Integer,Integer> e : commonTrans.entrySet()){
             if(e.getValue() == numItem) count++;
         }
         
@@ -194,11 +229,16 @@ public class DataMining {
 
     static Integer minSupport;
     final static double minSupP = 0.01;
+    
+    //result stream.
+    static List<String> OUTPUT_STREAM = new LinkedList<>();
     final static String INPUT_FILE_NAME = 
-        "C:/Users/8470p/Desktop/dataMining/testData.txt";
+        "C:/Users/8470p/Desktop/dataMining/mushrooms.csv";
     final static String OUTPUT_FILE_NAME =
         "C:/Users/8470p/Desktop/dataMining/output.txt";
     final static Charset ENCODING = StandardCharsets.UTF_8;
+
+    
 
 
  
